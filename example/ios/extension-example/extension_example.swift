@@ -28,7 +28,7 @@ struct LiveActivitiesAppAttributes: ActivityAttributes, Identifiable {
 }
 
 // Create shared default with custom group
-let sharedDefault = UserDefaults(suiteName: "group.dimitridessus.liveactivities")!
+let sharedDefault = UserDefaults(suiteName: "group.radar.liveactivities")!
 
 @available(iOSApplicationExtension 16.1, *)
 struct FootballMatchApp: Widget {

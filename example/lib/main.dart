@@ -51,7 +51,7 @@ class _HomeState extends State<Home> {
     super.initState();
 
     _liveActivitiesPlugin.init(
-        appGroupId: 'group.dimitridessus.liveactivities', urlScheme: 'la');
+        appGroupId: 'group.radar.liveactivities', urlScheme: 'la');
 
     _liveActivitiesPlugin.activityUpdateStream.listen((event) {
       print('Activity update: $event');
