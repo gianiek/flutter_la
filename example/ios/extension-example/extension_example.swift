@@ -37,12 +37,12 @@ struct FootballMatchApp: Widget {
       let matchName = sharedDefault.string(forKey: context.attributes.prefixedKey("matchName"))!
       let ruleFile = sharedDefault.string(forKey: context.attributes.prefixedKey("ruleFile"))!
       
-      let teamAName = sharedDefault.string(forKey: context.attributes.prefixedKey("teamAName"))!
+      let teamAName = sharedDefault.string(forKey: context.attributes.prefixedKey("geofenceDescription"))!
       let teamAState = sharedDefault.string(forKey: context.attributes.prefixedKey("teamAState"))!
       let teamAScore = sharedDefault.integer(forKey: context.attributes.prefixedKey("teamAScore"))
       let teamALogo = sharedDefault.string(forKey: context.attributes.prefixedKey("teamALogo"))!
       
-      let teamBName = sharedDefault.string(forKey: context.attributes.prefixedKey("teamBName"))!
+      let teamBName = sharedDefault.string(forKey: context.attributes.prefixedKey("geofenceDescription"))!
       let teamBState = sharedDefault.string(forKey: context.attributes.prefixedKey("teamBState"))!
       let teamBScore = sharedDefault.integer(forKey: context.attributes.prefixedKey("teamBScore"))
       let teamBLogo = sharedDefault.string(forKey: context.attributes.prefixedKey("teamBLogo"))!
@@ -169,12 +169,12 @@ struct FootballMatchApp: Widget {
     } dynamicIsland: { context in
       let matchName = sharedDefault.string(forKey: context.attributes.prefixedKey("matchName"))!
       
-      let teamAName = sharedDefault.string(forKey: context.attributes.prefixedKey("teamAName"))!
+      let teamAName = sharedDefault.string(forKey: context.attributes.prefixedKey("geofenceDescription"))!
       let teamAState = sharedDefault.string(forKey: context.attributes.prefixedKey("teamAState"))!
       let teamAScore = sharedDefault.integer(forKey: context.attributes.prefixedKey("teamAScore"))
       let teamALogo = sharedDefault.string(forKey: context.attributes.prefixedKey("teamALogo"))!
       
-      let teamBName = sharedDefault.string(forKey: context.attributes.prefixedKey("teamBName"))!
+      let teamBName = sharedDefault.string(forKey: context.attributes.prefixedKey("geofenceDescription"))!
       let teamBState = sharedDefault.string(forKey: context.attributes.prefixedKey("teamBState"))!
       let teamBScore = sharedDefault.integer(forKey: context.attributes.prefixedKey("teamBScore"))
       let teamBLogo = sharedDefault.string(forKey: context.attributes.prefixedKey("teamBLogo"))!

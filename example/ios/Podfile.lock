@@ -2,23 +2,34 @@ PODS:
   - Flutter (1.0.0)
   - flutter_app_group_directory (0.0.1):
     - Flutter
+  - flutter_radar (3.12.4):
+    - Flutter
+    - RadarSDK (= 3.19.5)
   - live_activities (0.0.1):
     - Flutter
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
+  - RadarSDK (3.19.5)
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_app_group_directory (from `.symlinks/plugins/flutter_app_group_directory/ios`)
+  - flutter_radar (from `.symlinks/plugins/flutter_radar/ios`)
   - live_activities (from `.symlinks/plugins/live_activities/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
+
+SPEC REPOS:
+  trunk:
+    - RadarSDK
 
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
   flutter_app_group_directory:
     :path: ".symlinks/plugins/flutter_app_group_directory/ios"
+  flutter_radar:
+    :path: ".symlinks/plugins/flutter_radar/ios"
   live_activities:
     :path: ".symlinks/plugins/live_activities/ios"
   path_provider_foundation:
@@ -27,8 +38,10 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   flutter_app_group_directory: d2c3337f424828558953172f9378d00df9b7756d
+  flutter_radar: 97b8e519a9569306061fd170d63d1f5715b14d8f
   live_activities: 5a5ddcfe2bd2cbbe7555a5da9c35b07d1a4ff2e8
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
+  RadarSDK: d14bd7ca516ad54ce5b13e43df88313d8de915d1
 
 PODFILE CHECKSUM: 4305caec6b40dde0ae97be1573c53de1882a07e5
 
