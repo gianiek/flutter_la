@@ -37,6 +37,13 @@ class _HomeState extends State<Home> {
   final _liveActivitiesPlugin = LiveActivities();
   String? _latestActivityId;
   String currentGeofence = 'none';
+  
+  // New variables for enhanced functionality
+  bool _loggingEnabled = true;
+  String userId = 'flutter'; // Default from initialization
+  int syncedGeofencesCount = 0;
+  List<String> syncedGeofences = []; // Store just geofence IDs
+  bool showGeofenceList = false;
 
   @override
   void initState() {
@@ -47,17 +54,45 @@ class _HomeState extends State<Home> {
         appGroupId: 'group.radar.liveactivities');
 
     _liveActivitiesPlugin.activityUpdateStream.listen((event) {
-      print('Activity update: $event');
+      _conditionalLog('Activity update: $event');
+    });
+  }
+
+  // Conditional logging function
+  void _conditionalLog(String message) {
+    if (_loggingEnabled) {
+      print(message);
+    }
+  }
+
+  // Toggle logging
+  void _toggleLogging() {
+    setState(() {
+      _loggingEnabled = !_loggingEnabled;
+    });
+  }
+
+  // Toggle geofence list visibility
+  void _toggleGeofenceList() {
+    setState(() {
+      showGeofenceList = !showGeofenceList;
     });
   }
 
   @pragma('vm:entry-point')
   void onLocation(Map res) {
-    print('📍📍 onLocation: $res');
+    _conditionalLog('📍📍 onLocation: $res');
     setState(() {
-      currentGeofence = (res['user']['geofences'] as List).isNotEmpty 
-          ? (res['user']['geofences'] as List).first['description'] 
-          : 'none';
+      // Update the current geofence if available
+      if (res.containsKey('user') && 
+          res['user'] != null && 
+          res['user'] is Map && 
+          res['user'].containsKey('geofences')) {
+        List geofences = res['user']['geofences'] as List;
+        currentGeofence = geofences.isNotEmpty 
+            ? geofences.first['description'] 
+            : 'none';
+      }
     });
     
     if (_latestActivityId != null) {
@@ -76,7 +111,7 @@ class _HomeState extends State<Home> {
 
   @pragma('vm:entry-point')
   void onClientLocation(Map res) {
-    print('📍📍 onClientLocation: $res');
+    _conditionalLog('📍📍 onClientLocation: $res');
   }
 
   @pragma('vm:entry-point')
@@ -85,16 +120,72 @@ class _HomeState extends State<Home> {
   }
 
   @pragma('vm:entry-point')
-  static void onLog(Map res) {
-    print('📍📍 onLog: $res');
+  void onLog(Map res) {
+    _conditionalLog('📍📍 onLog: $res');
+    
+    // Parse log messages to detect synced geofences
+    if (res.containsKey('message') && res['message'] is String) {
+      String message = res['message'] as String;
+      
+      // Look for synced geofence messages
+      if (message.contains('Synced geofence') && message.contains('radar_geofence_')) {
+        _extractSyncedGeofenceInfo(message);
+      }
+      
+      // Check for removed synced geofences
+      if (message.contains('Removed synced geofences')) {
+        setState(() {
+          syncedGeofences.clear();
+          syncedGeofencesCount = 0;
+        });
+      }
+    }
+  }
+  
+  void _extractSyncedGeofenceInfo(String message) {
+    // Extract the radar_geofence_ identifier
+    RegExp regExp = RegExp(r'identifier = (radar_geofence_[^;|\s]+)');
+    Match? match = regExp.firstMatch(message);
+    
+    if (match != null && match.groupCount >= 1) {
+      String geofenceId = match.group(1)!;
+      
+      // Check if we already have this geofence
+      if (!syncedGeofences.contains(geofenceId)) {
+        setState(() {
+          syncedGeofences.add(geofenceId);
+          syncedGeofencesCount = syncedGeofences.length;
+        });
+      }
+    }
   }
 
   @pragma('vm:entry-point')
   void onEvents(Map res) async {
-    print('📍📍 onEvents: $res');
+    _conditionalLog('📍📍 onEvents: $res');
     if (res.containsKey('events')) {
       List events = res['events'];
       for (var event in events) {
+        // Extract geofence IDs from events
+        if (event['type'] == 'user.entered_geofence' || 
+            event['type'] == 'user.exited_geofence') {
+          if (event.containsKey('geofence') && event['geofence'] is Map) {
+            var geofence = event['geofence'] as Map;
+            if (geofence.containsKey('_id')) {
+              String geofenceId = geofence['_id'].toString();
+              
+              // Only process radar_geofence_ IDs
+              if (geofenceId.startsWith('radar_geofence_') && 
+                  !syncedGeofences.contains(geofenceId)) {
+                setState(() {
+                  syncedGeofences.add(geofenceId);
+                  syncedGeofencesCount = syncedGeofences.length;
+                });
+              }
+            }
+          }
+        }
+        
         // start the live activity when we enter the geofence 
         if (event['type'] == 'user.entered_geofence' && event['geofence']['tag'] == 'store') {
           if (_latestActivityId == null) {
@@ -138,6 +229,10 @@ class _HomeState extends State<Home> {
   Future<void> initRadar() async {
     Radar.initialize('prj_test_pk_b3771406246d67aab4de4c58e90082ee476aee3d');
     Radar.setUserId('flutter');
+    setState(() {
+      userId = 'flutter'; // Store the userId for display
+    });
+    
     Radar.setDescription('Flutter');
     Radar.setMetadata({'foo': 'bar', 'LA': true, 'qux': 1});
     Radar.setLogLevel('info');
@@ -161,11 +256,11 @@ class _HomeState extends State<Home> {
       });
 
       var c = await Radar.getTrackingOptions();
-      print("Tracking options $c");
+      _conditionalLog("Tracking options $c");
     }
     
     final enabled = await _liveActivitiesPlugin.areActivitiesEnabled();
-    print("activities available: $enabled");
+    _conditionalLog("activities available: $enabled");
   }
 
   @override
@@ -185,32 +280,114 @@ class _HomeState extends State<Home> {
             color: Colors.white,
           ),
         ),
-        backgroundColor: Colors.green,
+        backgroundColor: const Color(0xFF000257),
+        actions: [
+          // Add a logging toggle button in the app bar
+          IconButton(
+            icon: Icon(
+              _loggingEnabled ? Icons.visibility : Icons.visibility_off,
+              color: Colors.white,
+            ),
+            onPressed: _toggleLogging,
+            tooltip: _loggingEnabled ? 'Disable Logs' : 'Enable Logs',
+          ),
+        ],
       ),
       body: SizedBox.expand(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // Display User ID and Current Geofence
+              Card(
+                color: const Color(0xFFF5F5F5),
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          const Text('User ID: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                          Expanded(child: Text(userId, overflow: TextOverflow.ellipsis)),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Text('Current Geofence: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                          Expanded(child: Text(currentGeofence, overflow: TextOverflow.ellipsis)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              
+              // Geofence count and list button
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: ElevatedButton(
+                  onPressed: _toggleGeofenceList,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF000257),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text('Synced Geofences (${syncedGeofencesCount})'),
+                ),
+              ),
+              
+              // Display geofence list if toggled - now with more space for scrolling
+              if (showGeofenceList)
+                Expanded(
+                  child: Card(
+                    color: const Color(0xFFF5F5F5),
+                    child: syncedGeofences.isEmpty
+                      ? const Center(child: Text('No geofences synced yet'))
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(8.0),
+                          itemCount: syncedGeofences.length,
+                          separatorBuilder: (context, index) => const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                              child: Text(
+                                syncedGeofences[index],
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            );
+                          },
+                        ),
+                  ),
+                ),
+              
+              if (!showGeofenceList)
+                const Spacer(),
+                
               if (_latestActivityId != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10.0),
                   child: Card(
+                    color: const Color(0xFF000257),
                     child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
                         children: [
                           const Text(
                             'Active Membership Card',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Text('Current Location: $currentGeofence'),
+                          Text(
+                            'Current Location: $currentGeofence',
+                            style: const TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -233,7 +410,7 @@ class _HomeState extends State<Home> {
                     setState(() => _latestActivityId = activityId);
                   },
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: const Color(0xFF000257),
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   ),
                   child: const Text(
